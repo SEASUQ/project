@@ -1,0 +1,7 @@
+/build*/
+/.idea/
+/.vscode/
+*.exe
+*.obj
+*.o
+.DS_Store
