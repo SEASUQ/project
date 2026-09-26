@@ -13,3 +13,13 @@ else()
     target_compile_options(game_logic PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+option(BUILD_GAME "Build the graphical game (requires SDL2)" ON)
+if(BUILD_GAME)
+    find_package(SDL2 2.0.10 CONFIG REQUIRED)
+    add_executable(platformer src/main.cpp src/drawing.cpp)
+    if(TARGET SDL2::SDL2main)
+        target_link_libraries(platformer PRIVATE SDL2::SDL2main)
+    endif()
+    target_link_libraries(platformer PRIVATE game_logic SDL2::SDL2)
+endif()
+
