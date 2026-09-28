@@ -154,6 +154,7 @@ void updateGame(Game& game, int direction, bool jump) {
     if (direction < -1) direction = -1;
     if (direction > 1) direction = 1;
     Player& player = game.player;
+    float previousBottom = player.body.y + player.body.height;
     if (jump && player.onGround) {
         player.speedY = -620;
         player.onGround = false;
@@ -166,6 +167,47 @@ void updateGame(Game& game, int direction, bool jump) {
         return;
     }
 
+    for (int i = 0; i < game.enemyCount; ++i) {
+        Enemy& enemy = game.enemies[i];
+        if (!enemy.alive) continue;
+        enemy.body.x += enemy.speed * STEP;
+        if (enemy.body.x < enemy.left) {
+            enemy.body.x = enemy.left;
+            enemy.speed = -enemy.speed;
+        }
+        if (enemy.body.x > enemy.right) {
+            enemy.body.x = enemy.right;
+            enemy.speed = -enemy.speed;
+        }
+        if (!overlaps(player.body, enemy.body)) continue;
+        if (player.speedY > 0 && previousBottom <= enemy.body.y + 4) {
+            enemy.alive = false;
+            player.body.y = enemy.body.y - player.body.height;
+            player.speedY = -380;
+            player.onGround = false;
+        } else {
+            loseLife(game);
+            return;
+        }
+    }
+
+    for (int y = 0; y < MAP_HEIGHT; ++y) {
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            char cell = game.map[y][x];
+            if (cell != 'o' && cell != 'F') continue;
+            Body item = {x * float(TILE) + 8, y * float(TILE) + 8, 24, 32};
+            if (!overlaps(player.body, item)) continue;
+            if (cell == 'o') {
+                game.map[y][x] = '.';
+                ++game.coins;
+            } else {
+                ++game.level;
+                if (game.level >= LEVEL_COUNT) game.screen = VICTORY;
+                else loadLevel(game);
+                return;
+            }
+        }
+    }
     game.camera = player.body.x - 960 / 3.0f;
     if (game.camera < 0) game.camera = 0;
     if (game.camera > MAP_WIDTH * TILE - 960)
